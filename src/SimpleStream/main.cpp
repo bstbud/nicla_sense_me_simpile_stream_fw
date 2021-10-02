@@ -92,6 +92,9 @@ void connectedLight()
 {
     unsigned long time = millis();
     setLedColor(blue, time);
+    delay(1000);
+    ledOff(time + 1000);
+
     ledColor = blue;
 }
 
@@ -215,16 +218,19 @@ static uint8_t sensorRawIndex = 0;
 
 void updateLED(unsigned long currentMs)
 {
+    if (ble_connected) {
+        return; //to minimize delay
+    }
+
     if (led_is_on) {
-        if ((int32_t)currentMs - (int32_t)ledSetTimeMs >= CFG_LED_ON_INTERVAL) {
+        if ((int32_t)currentMs - (int32_t)ledSetTimeMs >= CFG_LED_ON_DURATION) {
             ledOff(currentMs);
         }
     } else {
-        if ((int32_t)currentMs - (int32_t)ledSetTimeMs >= CFG_LED_OFF_INTERVAL) {
+        if ((int32_t)currentMs - (int32_t)ledSetTimeMs >= CFG_LED_OFF_DURATION) {
             setLedColor(ledColor, currentMs);
         }
     }
-
 }
 
 void loop()
