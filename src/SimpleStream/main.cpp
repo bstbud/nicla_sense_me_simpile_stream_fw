@@ -19,7 +19,7 @@ const char* uuidOfService    = "16480000-0525-4ad5-b4fb-6dd83f49546b";
 const char* uuidOfConfigChar = "16480001-0525-4ad5-b4fb-6dd83f49546b";
 const char* uuidOfDataChar   = "16480002-0525-4ad5-b4fb-6dd83f49546b";
 
-bool WRITE_BUFFER_FIXED_LENGTH = false;
+const bool WRITE_BUFFER_FIXED_LENGTH = false;
 
 // BLE Service
 static
@@ -38,15 +38,14 @@ BLECharacteristic sensorDataChar(uuidOfDataChar,
 BLEDescriptor     sensorDataDescriptor("2901", "Sensor Data TX");
 #endif  // USE_BLE
 
-static int8_t ble_output_buffer[WRITE_BUFFER_SIZE];
+static int8_t json_cfg_buffer[WRITE_BUFFER_SIZE];
 
-extern int actual_odr;
-
-static unsigned long currentMs;
 static unsigned long previousMs;
 static uint16_t interval = 1000 / ODR_ACC;
 static bool config_received = false;
 static bool ble_connected;
+static
+uint8_t column_index = 0;
 
 DynamicJsonDocument config_message(256);
 #if USE_SECOND_SERIAL_PORT_FOR_OUTPUT
@@ -55,17 +54,14 @@ auto& dataOutSerial = Serial1;
 auto& dataOutSerial = Serial;
 #endif //USE_SECOND_SERIAL_PORT_FOR_OUTPUT
 
-static
-int column_index = 0;
-
 static void sendJsonConfig()
 {
 #if USE_BLE
-    serializeJson(config_message, ble_output_buffer, WRITE_BUFFER_SIZE);
-    configChar.writeValue(ble_output_buffer, WRITE_BUFFER_SIZE);
+    serializeJson(config_message, json_cfg_buffer, WRITE_BUFFER_SIZE);
+    configChar.writeValue(json_cfg_buffer, WRITE_BUFFER_SIZE);
 #else
-    serializeJson(config_message, (void *)ble_output_buffer, WRITE_BUFFER_SIZE);
-    dataOutSerial.println((char*)ble_output_buffer);
+    serializeJson(config_message, (void *)json_cfg_buffer, WRITE_BUFFER_SIZE);
+    dataOutSerial.println((char*)json_cfg_buffer);
     dataOutSerial.flush();
 #endif  // USE_BLE
 }
@@ -203,7 +199,9 @@ static uint8_t sensorRawIndex = 0;
 
 void loop()
 {
+    unsigned long currentMs;
     bool connected_to_host = false;
+
     BHY2.update();
 
     currentMs = millis();
