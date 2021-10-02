@@ -53,7 +53,11 @@ int setup_sensors(JsonDocument& config_message, int column_start)
     accel.configure(ODR_ACC, 0);
     gyro.configure(ODR_GYR, 0);
     actual_odr                                          = ODR_ACC;
+#if CFG_IMITATE_NANO33BLE
+    config_message["sample_rate"]                       = 119;
+#else
     config_message["sample_rate"]                       = actual_odr;
+#endif
     config_message["column_location"]["AccelerometerX"] = column_index++;
     config_message["column_location"]["AccelerometerY"] = column_index++;
     config_message["column_location"]["AccelerometerZ"] = column_index++;

@@ -9,6 +9,9 @@
 
 #define CFG_IMITATE_NANO33BLE 0
 
+#define CFG_LED_ON_INTERVAL 50
+#define CFG_LED_OFF_INTERVAL 3000
+
 
 #define ENABLE_ACCEL 1
 #define ENABLE_GYRO  1
@@ -30,6 +33,8 @@
 #define ODR_GAS  1
 
 const int WRITE_BUFFER_SIZE = 256;  //about 164B
+
+typedef unsigned long time_ms_t;
 
 /**
  * BLE Settings

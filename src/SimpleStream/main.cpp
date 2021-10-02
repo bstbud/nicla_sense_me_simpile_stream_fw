@@ -47,6 +47,10 @@ static bool ble_connected;
 static
 uint8_t column_index = 0;
 
+static unsigned long ledSetTimeMs;
+uint8_t ledColor = green;
+bool led_is_on;
+
 DynamicJsonDocument config_message(256);
 #if USE_SECOND_SERIAL_PORT_FOR_OUTPUT
 auto& dataOutSerial = Serial1;
@@ -71,19 +75,31 @@ static void sendJsonConfig()
  * LEDS
  */
 
-uint32_t ledColor  = off;
+void setLedColor(uint32_t color, unsigned long time)
+{
+    nicla::leds.setColor((RGBColors) color);
+    ledSetTimeMs = time;
+
+    led_is_on = (color != off);
+}
+
+void ledOff(unsigned long time)
+{
+    setLedColor(off, time);
+}
+
 void connectedLight()
 {
-    if (ledColor != blue) {
-        //nicla::leds.setColor(blue);
-    }
+    unsigned long time = millis();
+    setLedColor(blue, time);
+    ledColor = blue;
 }
 
 void disconnectedLight()
 {
-    if (ledColor != green) {
-        //nicla::leds.setColor(green);
-    }
+    unsigned long time = millis();
+    setLedColor(green, time);
+    ledColor = green;
 }
 
 uint32_t get_free_memory_size()
@@ -197,6 +213,20 @@ void setup()
 static uint8_t packetNum      = 0;
 static uint8_t sensorRawIndex = 0;
 
+void updateLED(unsigned long currentMs)
+{
+    if (led_is_on) {
+        if ((int32_t)currentMs - (int32_t)ledSetTimeMs >= CFG_LED_ON_INTERVAL) {
+            ledOff(currentMs);
+        }
+    } else {
+        if ((int32_t)currentMs - (int32_t)ledSetTimeMs >= CFG_LED_OFF_INTERVAL) {
+            setLedColor(ledColor, currentMs);
+        }
+    }
+
+}
+
 void loop()
 {
     unsigned long currentMs;
@@ -292,4 +322,6 @@ void loop()
 #endif  //#if ENABLE_ACCEL || ENABLE_GYRO || ENABLE_MAG
         }
     }
+
+    updateLED(currentMs);
 }
