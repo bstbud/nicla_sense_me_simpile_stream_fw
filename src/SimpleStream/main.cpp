@@ -41,7 +41,7 @@ BLEDescriptor     sensorDataDescriptor("2901", "Sensor Data TX");
 static int8_t json_cfg_buffer[WRITE_BUFFER_SIZE];
 
 static unsigned long previousMs;
-static uint16_t interval = 1000 / ODR_ACC;
+static uint16_t interval = 1000 / ODR_IMU;
 static bool config_received = false;
 static bool ble_connected;
 static
@@ -70,11 +70,6 @@ static void sendJsonConfig()
 #endif  // USE_BLE
 }
 
-#if USE_BLE
-/*
- * LEDS
- */
-
 void setLedColor(uint32_t color, unsigned long time)
 {
     nicla::leds.setColor((RGBColors) color);
@@ -90,12 +85,17 @@ void ledOff(unsigned long time)
 
 void connectedLight()
 {
+#if USE_BLE
+    ledColor = blue;
+#else
+    ledColor = cyan;
+#endif
+
     unsigned long time = millis();
-    setLedColor(blue, time);
+    setLedColor(ledColor, time);
     delay(1000);
     ledOff(time + 1000);
 
-    ledColor = blue;
 }
 
 void disconnectedLight()
@@ -138,6 +138,11 @@ uint32_t get_free_memory_size()
     Serial.println(String(size));
     return size;
 }
+
+#if USE_BLE
+/*
+ * LEDS
+ */
 
 void onBLEConnected(BLEDevice central)
 {
@@ -189,9 +194,19 @@ static void setup_ble()
 }
 #endif  //#if USE_BLE
 
+
+void checkSensorCfg()
+{
+}
+
+
 void setup()
 {
-  Serial.begin(115200);
+#if USE_BLE
+  Serial.begin(SERIAL_BAUD_RATE_DEFAULT);
+#else
+  Serial.begin(SERIAL_BAUD_RATE);
+#endif
   while(!Serial);
 
   NiclaSettings niclaSettings(NICLA_I2C, 0, NICLA_VIA_ESLOV, 0);
@@ -209,6 +224,9 @@ void setup()
     delay(1000);
     sendJsonConfig();
 
+#if DEBUG
+    checkSensorCfg();
+#endif
     get_free_memory_size();
 }
 
@@ -271,7 +289,8 @@ void loop()
             {
 #if USE_SECOND_SERIAL_PORT_FOR_OUTPUT
                 Serial.println("Got Connect message");
-
+#else
+                connectedLight();
 #endif
                 config_received = true;
             }
@@ -289,6 +308,7 @@ void loop()
             if( rx.equals("disconnect"))
             {
                 config_received = false;
+                disconnectedLight();
             }
         }
     }
