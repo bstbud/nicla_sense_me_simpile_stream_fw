@@ -173,7 +173,7 @@ static void setup_ble()
 
     BLE.setLocalName(nameOfPeripheral);
     BLE.setAdvertisedService(sensorColService);
-    //BLE.setConnectionInterval(0x0006, 0x0007);  // 1.25 to 2.5ms
+    BLE.setConnectionInterval(0x0006, 0x0007);  // 1.25 to 2.5ms
     //BLE.noDebug();
 
     configChar.addDescriptor(configNameDescriptor);
